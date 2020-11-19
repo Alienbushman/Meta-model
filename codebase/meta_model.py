@@ -34,9 +34,12 @@ def label_feature_split(df, column):
     return feature, label
 
 
-def analyse_generic_models_regression(X_train, y_train, X_test, y_test, plot_shap=False):
+def analyse_generic_models_regression(X_train, y_train, X_test, y_test, plot_shap=False,run_gpu=False):
     """A function that trains the meta-model on the results of the different models"""
-    CBC = CatBoostRegressor(silent=True, task_type="GPU")
+    if (run_gpu):
+        CBC = CatBoostRegressor(silent=True, task_type="GPU")
+    else:
+        CBC = CatBoostRegressor(silent=True, task_type="CPU")
 
     CBC.fit(X_train, y_train)
     y_pred = CBC.predict(X_test)

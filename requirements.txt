@@ -1,8 +1,8 @@
 Numpy
-Pandas
+pandas
 catboost
 scikit-learn
 scipy
 xgboost
 lightgbm
-jupyterlab
+shap
