@@ -5,3 +5,4 @@ scikit-learn
 scipy
 xgboost
 lightgbm
+jupyterlab
