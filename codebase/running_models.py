@@ -1,4 +1,4 @@
-"""A module for storing methods relating to the running and storing of features in different models"""
+"""A module for storing functions relating to the running and storing of features in different models"""
 
 import os
 import math
@@ -20,7 +20,7 @@ import lightgbm as lgb
 
 def metrics_regression(y_test, y_pred):
     """
-    A method that prints the standard of the metrics
+    A function that prints the standard of the metrics
     :param y_test: the true labels of the test set
     :param y_pred: the predicted labels of the test set
     :return: None, this prints out the results of the metrics
@@ -34,7 +34,7 @@ def metrics_regression(y_test, y_pred):
 
 
 def run_datasets(df_train, df_target, target, apply_preprocessing=False, reporter_object=None):
-    """"A method that runs a model with for a given training and target dataset"""
+    """"A function that runs a model with for a given training and target dataset"""
     reporter_object.normalized = apply_preprocessing
     if apply_preprocessing:
         df_train = normalize_data_exclude_target(df_train, target)
@@ -48,7 +48,7 @@ def run_datasets(df_train, df_target, target, apply_preprocessing=False, reporte
 
 def split_into_bins(df, bins=12, column=None):
     """
-    This method adds which bin the column falls into based on the column and bins
+    This function adds which bin the column falls into based on the column and bins
     :param df: dataframe to be used
     :param column: the column which needs to be split
     :param bins: a list of the bins the dataframe is split into
@@ -70,7 +70,7 @@ def split_into_bins(df, bins=12, column=None):
 
 
 def run_generic_models_regression(X_train, y_train, X_test, y_test, reporter_object, run_variety_models=False):
-    """A method that runs the different models using the models specified below and returning the results to the reporter
+    """A function that runs the different models using the models specified below and returning the results to the reporter
     objects """
     # models from https://arxiv.org/abs/1708.05070 slightly adaped for regression and speeds
     GBC = GradientBoostingRegressor(n_estimators=100, learning_rate=1.0, max_depth=1, random_state=0)
@@ -100,7 +100,7 @@ def run_generic_models_regression(X_train, y_train, X_test, y_test, reporter_obj
 
 
 def distance_metrics(df1, df2, column):
-    """A method that calculates different distance metrics for different columns"""
+    """A function that calculates different distance metrics for different columns"""
     series_1, series_2 = basic_drop_series(df1[column], df2[column])
 
     series_1, series_2 = same_length_lists(series_1, series_2)
@@ -157,7 +157,7 @@ class ModelData(object):
         self.models.append(ModelResults(model_name, r2, MAE, MSE, predicted_sum, count, mean, std, bins))
 
     def print_model_details(self):
-        """A method that prints the details of the model's, used for debugging purposes"""
+        """A function that prints the details of the model's, used for debugging purposes"""
         print('Train dataset: {} Test dataset: {}'.format(self.train_dataset, self.test_dataset))
         print('Data normalization is {}'.format(self.normalized))
         print('The target amount is {}'.format(self.actual_sum))
@@ -168,7 +168,7 @@ class ModelData(object):
                                               round(model.MAE, 2), round(model.predicted_sum, 2)))
 
     def output_to_csv(self, filename, features):
-        """A method of an object that outputs the contents of a given reporter object and outputs them to a CSV file"""
+        """A function of an object that outputs the contents of a given reporter object and outputs them to a CSV file"""
         new_model_outputs = []
         # The results for each model
         for model in self.models:
@@ -215,7 +215,7 @@ class ModelData(object):
 
 
 def same_length_lists(l1, l2):
-    """A method that takes two lists and makes them the same length by removing elements of the longer list, this is used to
+    """A function that takes two lists and makes them the same length by removing elements of the longer list, this is used to
     calculate some distance metrics """
     l1, l2 = sorted_list(l1, l2)
     if len(l1) > len(l2):
@@ -238,7 +238,7 @@ def same_length_lists(l1, l2):
 
 
 def remove_negative(series_1, series_2):
-    """A method that ensures neither list contains negative elements by adding the absolute of the minimum value to each element if
+    """A function that ensures neither list contains negative elements by adding the absolute of the minimum value to each element if
     it is negative """
     min_value = min(min(series_1), min(series_2))
     if min_value <= 0:
@@ -249,42 +249,42 @@ def remove_negative(series_1, series_2):
 
 
 def KL_divergence(df1, df2):
-    """A method that returns the Kullback–Leibler divergence of two lists"""
+    """A function that returns the Kullback–Leibler divergence of two lists"""
     return mutual_info_score(df1, df2)
 
 
 def calculate_wasserstein_distance(series_1, series_2):
-    """A method that calculates the wasserstein distance between two series"""
+    """A function that calculates the wasserstein distance between two series"""
     return wasserstein_distance(series_1, series_2)
 
 
 def hellinger(p, q):
-    """A method that calculates the hellinger distance between two series"""
+    """A function that calculates the hellinger distance between two series"""
     return sum([(math.sqrt(t[0]) - math.sqrt(t[1])) * (math.sqrt(t[0]) - math.sqrt(t[1])) \
                 for t in zip(p, q)]) / math.sqrt(2.)
 
 
 def ks_test(series_1, series_2):
-    """A method that performs the Kolmogorov–Smirnov test on two series"""
+    """A function that performs the Kolmogorov–Smirnov test on two series"""
     return ks_2samp(series_1, series_2)
 
 
 def sorted_list(series_1, series_2):
-    """A method that returns two sorted lists"""
+    """A function that returns two sorted lists"""
     sorted_1 = sorted(series_1)
     sorted_2 = sorted(series_2)
     return sorted_1, sorted_2
 
 
 def label_feature_split(df, column):
-    """A method that splits the features and labels"""
+    """A function that splits the features and labels"""
     label = df[[column]].values.ravel()
     feature = df.drop([column], axis=1)
     return feature, label
 
 
 def normalize_data_exclude_target(df, target):
-    """A method that normalizes each feature in a dataframe excluding the target"""
+    """A function that normalizes each feature in a dataframe excluding the target"""
     target_df = df[target]
     df = df.drop(target, axis=1)
     columns_encode = list(df.select_dtypes(include=['float', 'int']))
@@ -295,10 +295,10 @@ def normalize_data_exclude_target(df, target):
 
 
 def get_name(string):
-    """A method that returns the name of a dataset from a location"""
+    """A function that returns the name of a dataset from a location"""
     return string.rsplit('/', 1)[1][0:-4]
 
 
 def basic_drop_series(df1, df2):
-    """A method that drops the nans for two dataframes"""
+    """A function that drops the nans for two dataframes"""
     return df1.dropna(), df2.dropna()

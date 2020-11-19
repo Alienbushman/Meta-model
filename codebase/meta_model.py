@@ -7,7 +7,7 @@ from catboost import CatBoostRegressor
 
 
 def preprocessing(df, target, column_names=None, bad_columns=None, apply_one_hot=True, using_xgboost=False):
-    """A method that applies generic preprocessing to the datasets"""
+    """A function that applies generic preprocessing to the datasets"""
     target_df = df[target]
     df.drop(target, inplace=True, axis=1)
 
@@ -28,14 +28,14 @@ def preprocessing(df, target, column_names=None, bad_columns=None, apply_one_hot
 
 
 def label_feature_split(df, column):
-    """A method that splits the features and the label"""
+    """A function that splits the features and the label"""
     label = df[[column]].values.ravel()
     feature = df.drop([column], axis=1)
     return feature, label
 
 
 def analyse_generic_models_regression(X_train, y_train, X_test, y_test, plot_shap=False):
-    """A method that trains the meta-model on the results of the different models"""
+    """A function that trains the meta-model on the results of the different models"""
     CBC = CatBoostRegressor(silent=True, task_type="GPU")
 
     CBC.fit(X_train, y_train)
@@ -49,28 +49,28 @@ def analyse_generic_models_regression(X_train, y_train, X_test, y_test, plot_sha
 
 
 def split_dataset(df, dataset):
-    """A method that splits the dataset into the target and training datasets"""
+    """A function that splits the dataset into the target and training datasets"""
     test_df = df[df["['test_dataset']_" + dataset] == 1]
     train_df = df[df["['test_dataset']_" + dataset] != 1]
     return train_df, test_df
 
 
 def drop_bad_columns(df, columns=None):
-    """A method that removes the columns which should not be included"""
+    """A function that removes the columns which should not be included"""
     if columns is not None:
         return df.drop(columns, axis=1)
     return df
 
 
 def keep_relevant_columns(df, column_names=None):
-    """A method for isolating relevant columns if it is required"""
+    """A function for isolating relevant columns if it is required"""
     if column_names is None:
         return df
     return df[column_names]
 
 
 def encode_one_hot(df):
-    """A method for applying one hot encoding to any columns where it is applicable"""
+    """A function for applying one hot encoding to any columns where it is applicable"""
     columns_to_encode = list(df.select_dtypes(include=['category', 'object']))
     for col in columns_to_encode:
         if len(df[col].unique()) < 100:
@@ -80,7 +80,7 @@ def encode_one_hot(df):
 
 
 def process_column_names_xgboost(df):
-    """A method to process the features to meet XGboost's requirements with regards to which characters can be
+    """A function to process the features to meet XGboost's requirements with regards to which characters can be
     included in naming conventions """
     regex = re.compile(r"\[|\]|<", re.IGNORECASE)
     df.columns = [regex.sub("_", col) if any(x in str(col) for x in set(('[', ']', '<'))) else col for col in
