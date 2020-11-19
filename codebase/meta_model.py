@@ -1,34 +1,13 @@
-import numpy
+"""A module to run the meta-model on the results of the trained models"""
 import re
+import numpy
 import shap
 import pandas as pd
 from catboost import CatBoostRegressor
 
 
-def keep_relevant_columns(df, column_names=None):
-    if column_names is None:
-        return df
-    return df[column_names]
-
-
-def encode_one_hot(df):
-    columns_to_encode = list(df.select_dtypes(include=['category', 'object']))
-    for col in columns_to_encode:
-        if len(df[col].unique()) < 100:
-            df = pd.concat([df, pd.get_dummies(df[col], prefix=[col])], axis=1)
-        df.drop(col, inplace=True, axis=1)
-    return df
-
-
-def process_column_names_xgboost(df):
-    # XGboost has additional requirements on characters which can be in column names, so this removes the characters
-    regex = re.compile(r"\[|\]|<", re.IGNORECASE)
-    df.columns = [regex.sub("_", col) if any(x in str(col) for x in set(('[', ']', '<'))) else col for col in
-                  df.columns.values]
-    return df
-
-
-def preprocessing(df, target, column_names=None, bad_columns=None, apply_one_hot=True, using_xgboost=True):
+def preprocessing(df, target, column_names=None, bad_columns=None, apply_one_hot=True, using_xgboost=False):
+    """A method that applies generic preprocessing to the datasets"""
     target_df = df[target]
     df.drop(target, inplace=True, axis=1)
 
@@ -49,12 +28,14 @@ def preprocessing(df, target, column_names=None, bad_columns=None, apply_one_hot
 
 
 def label_feature_split(df, column):
+    """A method that splits the features and the label"""
     label = df[[column]].values.ravel()
     feature = df.drop([column], axis=1)
     return feature, label
 
 
 def analyse_generic_models_regression(X_train, y_train, X_test, y_test, plot_shap=False):
+    """A method that trains the meta-model on the results of the different models"""
     CBC = CatBoostRegressor(silent=True, task_type="GPU")
 
     CBC.fit(X_train, y_train)
@@ -68,12 +49,40 @@ def analyse_generic_models_regression(X_train, y_train, X_test, y_test, plot_sha
 
 
 def split_dataset(df, dataset):
+    """A method that splits the dataset into the target and training datasets"""
     test_df = df[df["['test_dataset']_" + dataset] == 1]
     train_df = df[df["['test_dataset']_" + dataset] != 1]
     return train_df, test_df
 
 
 def drop_bad_columns(df, columns=None):
+    """A method that removes the columns which should not be included"""
     if columns is not None:
         return df.drop(columns, axis=1)
+    return df
+
+
+def keep_relevant_columns(df, column_names=None):
+    """A method for isolating relevant columns if it is required"""
+    if column_names is None:
+        return df
+    return df[column_names]
+
+
+def encode_one_hot(df):
+    """A method for applying one hot encoding to any columns where it is applicable"""
+    columns_to_encode = list(df.select_dtypes(include=['category', 'object']))
+    for col in columns_to_encode:
+        if len(df[col].unique()) < 100:
+            df = pd.concat([df, pd.get_dummies(df[col], prefix=[col])], axis=1)
+        df.drop(col, inplace=True, axis=1)
+    return df
+
+
+def process_column_names_xgboost(df):
+    """A method to process the features to meet XGboost's requirements with regards to which characters can be
+    included in naming conventions """
+    regex = re.compile(r"\[|\]|<", re.IGNORECASE)
+    df.columns = [regex.sub("_", col) if any(x in str(col) for x in set(('[', ']', '<'))) else col for col in
+                  df.columns.values]
     return df

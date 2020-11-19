@@ -1,4 +1,7 @@
+"""A module for storing methods relating to the running and storing of features in different models"""
+
 import os
+import math
 import pandas as pd
 from scipy.stats import wasserstein_distance, ks_2samp
 from sklearn.metrics import (
@@ -17,7 +20,7 @@ import lightgbm as lgb
 
 def metrics_regression(y_test, y_pred):
     """
-    Prints the standard of the metrics
+    A method that prints the standard of the metrics
     :param y_test: the true labels of the test set
     :param y_pred: the predicted labels of the test set
     :return: None, this prints out the results of the metrics
@@ -31,8 +34,8 @@ def metrics_regression(y_test, y_pred):
 
 
 def run_datasets(df_train, df_target, target, apply_preprocessing=False, reporter_object=None):
+    """"A method that runs a model with for a given training and target dataset"""
     reporter_object.normalized = apply_preprocessing
-
     if apply_preprocessing:
         df_train = normalize_data_exclude_target(df_train, target)
         df_target = normalize_data_exclude_target(df_target, target)
@@ -66,22 +69,27 @@ def split_into_bins(df, bins=12, column=None):
     return count, mean, std, percentile_outputs
 
 
-def run_generic_models_regression(X_train, y_train, X_test, y_test, reporter_object):
+def run_generic_models_regression(X_train, y_train, X_test, y_test, reporter_object, run_variety_models=False):
+    """A method that runs the different models using the models specified below and returning the results to the reporter
+    objects """
     # models from https://arxiv.org/abs/1708.05070 slightly adaped for regression and speeds
     GBC = GradientBoostingRegressor(n_estimators=100, learning_rate=1.0, max_depth=1, random_state=0)
     RFC = RandomForestRegressor(n_estimators=500, max_features=0.25)
-    SVM = SVR(C=0.01, gamma=0.1, kernel="poly", degree=3, coef0=10.0)
     ETC = ExtraTreesRegressor(n_estimators=1000, max_features="log2")
+    # Regression algorithms not included for computational reasons
+    SVM = SVR(C=0.01, gamma=0.1, kernel="poly", degree=3, coef0=10.0)
     LR = LogisticRegression(C=1.5, penalty="l1", fit_intercept=True)
     # Models that were not included in the paper not from SKlearn
     XGC = XGBRegressor()
     CBC = CatBoostRegressor(silent=True, task_type="GPU")
     light_gb = lgb.LGBMRegressor()
     # Commenting out the later models variable will run all the variables
-
-    models = [(ETC, "Extra tree classifier"), (RFC, "random forest classifier"), (GBC, "gradient boosted classifier"),
-              (XGC, "XGBoost"), (light_gb, "Light GBM")]
-    models = [(RFC, "random forest regressor")]
+    if run_variety_models:
+        models = [(ETC, "Extra tree classifier"), (RFC, "random forest classifier"),
+                  (GBC, "gradient boosted classifier"),
+                  (XGC, "XGBoost"), (CBC, 'Catboost'), (light_gb, "Light GBM")]
+    else:
+        models = [(RFC, "random forest regressor")]
     for model, name in models:
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
@@ -92,6 +100,7 @@ def run_generic_models_regression(X_train, y_train, X_test, y_test, reporter_obj
 
 
 def distance_metrics(df1, df2, column):
+    """A method that calculates different distance metrics for different columns"""
     series_1, series_2 = basic_drop_series(df1[column], df2[column])
 
     series_1, series_2 = same_length_lists(series_1, series_2)
@@ -104,7 +113,9 @@ def distance_metrics(df1, df2, column):
     return kl_divergence_result, wasserstein_distance_result, hellinger_distance_result, ks_test_result
 
 
-class model_results(object):
+class ModelResults(object):
+    """A storage object which stores the results of different models trained"""
+
     def __init__(self, model_name, r2, MAE, MSE, predicted_sum, count, mean, std, bins):
         self.model_name = model_name
         self.r2 = r2
@@ -117,7 +128,9 @@ class model_results(object):
         self.bins = bins
 
 
-class model_data(object):
+class ModelData(object):
+    """A storage object which contains the details about the model as well as the variables used to train the models"""
+
     def __init__(self, train_dataset, test_dataset):
         self.train_dataset = train_dataset
         self.test_dataset = test_dataset
@@ -141,9 +154,10 @@ class model_data(object):
         self.ks_test = []
 
     def add_model(self, model_name, r2, MAE, MSE, predicted_sum, count, mean, std, bins):
-        self.models.append(model_results(model_name, r2, MAE, MSE, predicted_sum, count, mean, std, bins))
+        self.models.append(ModelResults(model_name, r2, MAE, MSE, predicted_sum, count, mean, std, bins))
 
     def print_model_details(self):
+        """A method that prints the details of the model's, used for debugging purposes"""
         print('Train dataset: {} Test dataset: {}'.format(self.train_dataset, self.test_dataset))
         print('Data normalization is {}'.format(self.normalized))
         print('The target amount is {}'.format(self.actual_sum))
@@ -154,8 +168,9 @@ class model_data(object):
                                               round(model.MAE, 2), round(model.predicted_sum, 2)))
 
     def output_to_csv(self, filename, features):
-
+        """A method of an object that outputs the contents of a given reporter object and outputs them to a CSV file"""
         new_model_outputs = []
+        # The results for each model
         for model in self.models:
             dictionary = {'train_dataset': self.train_dataset, 'test_dataset': self.test_dataset,
                           'normalized': self.normalized,
@@ -169,6 +184,7 @@ class model_data(object):
                 dictionary['model_bin_number_' + str(i)] = bin_value
                 i += 1
             i = 0
+            # The results for each feature
             for feature in features:
                 dictionary[feature + '_std_train'] = self.std_train[i]
                 dictionary[feature + '_mean_train'] = self.mean_train[i]
@@ -199,6 +215,8 @@ class model_data(object):
 
 
 def same_length_lists(l1, l2):
+    """A method that takes two lists and makes them the same length by removing elements of the longer list, this is used to
+    calculate some distance metrics """
     l1, l2 = sorted_list(l1, l2)
     if len(l1) > len(l2):
         s, l = l2, l1
@@ -220,6 +238,8 @@ def same_length_lists(l1, l2):
 
 
 def remove_negative(series_1, series_2):
+    """A method that ensures neither list contains negative elements by adding the absolute of the minimum value to each element if
+    it is negative """
     min_value = min(min(series_1), min(series_2))
     if min_value <= 0:
         add_value = (abs(min_value) + 1)
@@ -229,36 +249,42 @@ def remove_negative(series_1, series_2):
 
 
 def KL_divergence(df1, df2):
+    """A method that returns the Kullback–Leibler divergence of two lists"""
     return mutual_info_score(df1, df2)
 
 
 def calculate_wasserstein_distance(series_1, series_2):
+    """A method that calculates the wasserstein distance between two series"""
     return wasserstein_distance(series_1, series_2)
 
 
 def hellinger(p, q):
-    import math
+    """A method that calculates the hellinger distance between two series"""
     return sum([(math.sqrt(t[0]) - math.sqrt(t[1])) * (math.sqrt(t[0]) - math.sqrt(t[1])) \
                 for t in zip(p, q)]) / math.sqrt(2.)
 
 
 def ks_test(series_1, series_2):
+    """A method that performs the Kolmogorov–Smirnov test on two series"""
     return ks_2samp(series_1, series_2)
 
 
 def sorted_list(series_1, series_2):
+    """A method that returns two sorted lists"""
     sorted_1 = sorted(series_1)
     sorted_2 = sorted(series_2)
     return sorted_1, sorted_2
 
 
 def label_feature_split(df, column):
+    """A method that splits the features and labels"""
     label = df[[column]].values.ravel()
     feature = df.drop([column], axis=1)
     return feature, label
 
 
 def normalize_data_exclude_target(df, target):
+    """A method that normalizes each feature in a dataframe excluding the target"""
     target_df = df[target]
     df = df.drop(target, axis=1)
     columns_encode = list(df.select_dtypes(include=['float', 'int']))
@@ -269,8 +295,10 @@ def normalize_data_exclude_target(df, target):
 
 
 def get_name(string):
+    """A method that returns the name of a dataset from a location"""
     return string.rsplit('/', 1)[1][0:-4]
 
 
 def basic_drop_series(df1, df2):
+    """A method that drops the nans for two dataframes"""
     return df1.dropna(), df2.dropna()

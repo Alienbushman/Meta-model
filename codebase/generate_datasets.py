@@ -1,6 +1,6 @@
 """A module for generating different friedman datasets"""
-import numpy as np
 import numbers
+import numpy as np
 
 
 def check_random_state(seed):
@@ -25,12 +25,12 @@ def check_random_state(seed):
 
 def generate_friedmen_ranges(number_datasets=10, n_samples=10000, window_size=2,
                              noise=0.1, shift_dataset=0):
-    """The method for generating friedman datasets"""
+    """A method for generating friedman datasets"""
     datasets_feature = []
     datasets_target = []
     for i in range(number_datasets + 1):
         generator = check_random_state(i)
-        X = generator.rand(n_samples, 4)/window_size
+        X = generator.rand(n_samples, 4) / window_size
         if shift_dataset > 0:
             dataset_range = generate_X_values(X)
         else:
@@ -41,7 +41,7 @@ def generate_friedmen_ranges(number_datasets=10, n_samples=10000, window_size=2,
 
 
 def generate_X_values(X):
-    """Generating X values from a list of random variables for friedman datasets"""
+    """A method for generating X values from a list of random variables for friedman datasets"""
     X[:, 0] *= 100
     X[:, 1] *= 520 * np.pi
     X[:, 1] += 40 * np.pi
@@ -51,7 +51,7 @@ def generate_X_values(X):
 
 
 def generate_y(X, i, n_samples, noise, shift_dataset):
-    """Generate Y values for the friedman dataset"""
+    """A method for generating Y values for the friedman dataset"""
     generator = check_random_state(i)
 
     y = np.arctan((X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) / X[:, 0]) + noise * generator.randn(n_samples)
